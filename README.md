@@ -1,5 +1,5 @@
 # DCGAN
-[Incomplete] DCGAN with TF2.0
+[On hold] DCGAN with TF2.0
 
 - コード未整形
 - 損失値出力が見にくい
