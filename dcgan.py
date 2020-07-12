@@ -35,12 +35,12 @@ class Generator(tf.keras.Model):
 
     def call(self, x):
 
-        d2 = self.act1(self.bn1(self.dens1(x)))
-        d3 = self.ups1(self.re(d2))
-        d4 = self.conv1(d3)
-        d5 = self.conv2(self.ups2(d4))
+        d1 = self.act1(self.bn1(self.dens1(x)))
+        d2 = self.ups1(self.re(d1))
+        d3 = self.ups2(self.conv1(d2))
+        d4 = self.conv2(d3)
 
-        return d5
+        return d4
 
 # Discriminator
 class Discriminator(tf.keras.Model):
@@ -186,8 +186,8 @@ class trainer():
 def main():
     
     # プログラム情報
-    print("DCGAN ver.4")
-    print("Last update date:    2020/05/08\n")
+    print("DCGAN")
+    print("Last update date:    2020/07/12\n")
     
     # コマンドラインオプション作成
     parser = arg.ArgumentParser(description='DCGAN')
