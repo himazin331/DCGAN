@@ -22,19 +22,19 @@ class Generator(tf.keras.Model):
             
         noise_shape = (100,)
 
-        self.dens1 = kl.Dense(parm*parm*128, use_bias=False, input_shape=noise_shape)
+        self.dens1 = kl.Dense(parm*parm*256, use_bias=False, input_shape=noise_shape)
         self.bn1 = kl.BatchNormalization()
-        self.act1 = kl.Activation(kl.ReLU())
+        self.act1 = kl.Activation(tf.nn.tanh)
 
-        self.re = kl.Reshape((parm,parm,128), input_shape=(128*parm*parm,))
+        self.re = kl.Reshape((parm,parm,256), input_shape=(256*parm*parm,))
 
         self.deconv1 = kl.Conv2DTranspose(128, 5, padding='same', use_bias=False,)
         self.bn2 = kl.BatchNormalization()
-        self.act2 = kl.Activation(kl.ReLU())
+        self.act2 = kl.Activation(tf.nn.tanh)
 
         self.deconv2 = kl.Conv2DTranspose(64, 5, 2, padding='same', use_bias=False,)
         self.bn3 = kl.BatchNormalization()
-        self.act3 = kl.Activation(kl.ReLU())
+        self.act3 = kl.Activation(tf.nn.tanh)
         
         self.deconv3 = kl.Conv2DTranspose(1, 5, 2, padding="same", use_bias=False, activation="tanh")
 
@@ -56,11 +56,11 @@ class Discriminator(tf.keras.Model):
         input_shape = input_shape[1:4]
         
         self.conv1 = kl.Conv2D(64, 5, 2, padding="same", input_shape=input_shape)
-        self.act1 = kl.Activation(kl.ReLU())
+        self.act1 = kl.Activation(tf.nn.tanh)
         self.drop1 = kl.Dropout(0.3)
 
         self.conv2 = kl.Conv2D(128, 5, 2, padding="same")
-        self.act2 = kl.Activation(kl.ReLU())
+        self.act2 = kl.Activation(tf.nn.tanh)
         self.drop2 = kl.Dropout(0.3)
 
         self.flt = kl.Flatten()
