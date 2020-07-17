@@ -28,11 +28,11 @@ class Generator(tf.keras.Model):
 
         self.re = kl.Reshape((parm,parm,256), input_shape=(256*parm*parm,))
 
-        self.deconv1 = kl.Conv2DTranspose(128, 5, padding='same', use_bias=False,)
+        self.deconv1 = kl.Conv2DTranspose(128, 5, padding='same', use_bias=False)
         self.bn2 = kl.BatchNormalization()
         self.act2 = kl.Activation(tf.nn.tanh)
 
-        self.deconv2 = kl.Conv2DTranspose(64, 5, 2, padding='same', use_bias=False,)
+        self.deconv2 = kl.Conv2DTranspose(64, 5, 2, padding='same', use_bias=False)
         self.bn3 = kl.BatchNormalization()
         self.act3 = kl.Activation(tf.nn.tanh)
         
@@ -40,10 +40,10 @@ class Generator(tf.keras.Model):
 
     def call(self, x):
 
-        d1 = self.act1(self.bn1(self.dens1(x)))
+        d1 = self.bn1(self.act1(self.dens1(x)))
         d2 = self.re(d1)
-        d3 = self.act2(self.bn2(self.deconv1(d2)))
-        d4 = self.act3(self.bn3(self.deconv2(d3)))
+        d3 = self.bn2(self.act2(self.deconv1(d2)))
+        d4 = self.bn3(self.act3(self.deconv2(d3)))
         d5 = self.deconv3(d4)
 
         return d5
@@ -55,13 +55,17 @@ class Discriminator(tf.keras.Model):
 
         input_shape = input_shape[1:4]
         
-        self.conv1 = kl.Conv2D(64, 5, 2, padding="same", input_shape=input_shape)
+        self.conv1 = kl.Conv2D(32, 5, 2, padding="same", input_shape=input_shape)
         self.act1 = kl.Activation(tf.nn.tanh)
         self.drop1 = kl.Dropout(0.3)
 
-        self.conv2 = kl.Conv2D(128, 5, 2, padding="same")
+        self.conv2 = kl.Conv2D(64, 5, 2, padding="same")
         self.act2 = kl.Activation(tf.nn.tanh)
         self.drop2 = kl.Dropout(0.3)
+
+        self.conv3 = kl.Conv2D(128, 5, 2, padding="same")
+        self.act3 = kl.Activation(tf.nn.tanh)
+        self.drop3 = kl.Dropout(0.3)
 
         self.flt = kl.Flatten()
         self.dens2 = kl.Dense(1, activation="sigmoid")
@@ -70,7 +74,8 @@ class Discriminator(tf.keras.Model):
 
         d1 = self.drop1(self.act1(self.conv1(x)))
         d2 = self.drop2(self.act2(self.conv2(d1)))
-        d3 = self.flt(d2)
+        d21 = self.drop3(self.act3(self.conv3(d2)))
+        d3 = self.flt(d21)
         d4 = self.dens2(d3)
 
         return d4
