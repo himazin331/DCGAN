@@ -22,25 +22,31 @@ class Generator(tf.keras.Model):
             
         noise_shape = (100,)
 
-        self.dens1 = kl.Dense(parm*parm*128, input_shape=noise_shape)
+        self.dens1 = kl.Dense(parm*parm*128, use_bias=False, input_shape=noise_shape)
         self.bn1 = kl.BatchNormalization()
-        self.act1 = kl.Activation(tf.nn.tanh)
+        self.act1 = kl.Activation(kl.ReLU())
 
         self.re = kl.Reshape((parm,parm,128), input_shape=(128*parm*parm,))
-        self.ups1 = kl.UpSampling2D((2,2))
 
-        self.conv1 = kl.Conv2D(64, 5, padding="same", activation="tanh")
-        self.ups2 = kl.UpSampling2D((2,2))
-        self.conv2 = kl.Conv2D(1, 5, padding="same", activation="tanh")
+        self.deconv1 = kl.Conv2DTranspose(128, 5, padding='same', use_bias=False,)
+        self.bn2 = kl.BatchNormalization()
+        self.act2 = kl.Activation(kl.ReLU())
+
+        self.deconv2 = kl.Conv2DTranspose(64, 5, 2, padding='same', use_bias=False,)
+        self.bn3 = kl.BatchNormalization()
+        self.act3 = kl.Activation(kl.ReLU())
+        
+        self.deconv3 = kl.Conv2DTranspose(1, 5, 2, padding="same", use_bias=False, activation="tanh")
 
     def call(self, x):
 
         d1 = self.act1(self.bn1(self.dens1(x)))
-        d2 = self.ups1(self.re(d1))
-        d3 = self.ups2(self.conv1(d2))
-        d4 = self.conv2(d3)
+        d2 = self.re(d1)
+        d3 = self.act2(self.bn2(self.deconv1(d2)))
+        d4 = self.act3(self.bn3(self.deconv2(d3)))
+        d5 = self.deconv3(d4)
 
-        return d4
+        return d5
 
 # Discriminator
 class Discriminator(tf.keras.Model):
@@ -49,20 +55,22 @@ class Discriminator(tf.keras.Model):
 
         input_shape = input_shape[1:4]
         
-        self.conv1 = kl.Conv2D(64, 5, strides=2, padding="same", activation="tanh", input_shape=input_shape)
+        self.conv1 = kl.Conv2D(64, 5, 2, padding="same", input_shape=input_shape)
+        self.act1 = kl.Activation(kl.ReLU())
+        self.drop1 = kl.Dropout(0.3)
 
-        self.conv2 = kl.Conv2D(128, 5, strides=2, padding="same", activation="tanh")
+        self.conv2 = kl.Conv2D(128, 5, 2, padding="same")
+        self.act2 = kl.Activation(kl.ReLU())
+        self.drop2 = kl.Dropout(0.3)
 
         self.flt = kl.Flatten()
-
-        self.dens1 = kl.Dense(1024, activation="tanh")
         self.dens2 = kl.Dense(1, activation="sigmoid")
 
     def call(self, x):    
 
-        d1 = self.conv1(x)
-        d2 = self.conv2(d1)
-        d3 = self.dens1(self.flt(d2))
+        d1 = self.drop1(self.act1(self.conv1(x)))
+        d2 = self.drop2(self.act2(self.conv2(d1)))
+        d3 = self.flt(d2)
         d4 = self.dens2(d3)
 
         return d4
@@ -198,7 +206,7 @@ def main():
                         help='生成画像の保存先指定(デフォルト値=./result')
     parser.add_argument('--batch_size', '-b', type=int, default=256,
                         help='ミニバッチサイズの指定(デフォルト値=64)')
-    parser.add_argument('--iter', '-i', type=int, default=3000,
+    parser.add_argument('--iter', '-i', type=int, default=5000,
                         help='学習回数の指定(デフォルト値=10)')
     args = parser.parse_args()
 
